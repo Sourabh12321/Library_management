@@ -4,7 +4,8 @@ const { bookModel } = require("../models/bookModel");
 const {userModel} = require("../models/userModel")
 const { authenticate } = require("../middlewares/auth");
 
-bookRouter.post("/addbook", authenticate, async function createBook(req, res) {
+
+bookRouter.post("/addbook", authenticate, async (req, res)=> {
   try {
     const { ISBN, title, author, publishedYear, quantity } = req.body;
 
@@ -35,7 +36,7 @@ bookRouter.post("/addbook", authenticate, async function createBook(req, res) {
 });
 
 
-bookRouter.patch("/update/:ISBN", async function updateBook(req, res) {
+bookRouter.patch("/update/:ISBN", async (req, res)=> {
   try {
     const { ISBN } = req.params;
     const { title, author, publishedYear, quantity } = req.body;
@@ -61,7 +62,7 @@ bookRouter.patch("/update/:ISBN", async function updateBook(req, res) {
 });
 
 
-bookRouter.delete("/delete/:ISBN", async function deleteBook(req, res) {
+bookRouter.delete("/delete/:ISBN", async (req, res) => {
   try {
     const { ISBN } = req.params;
 
@@ -79,11 +80,37 @@ bookRouter.delete("/delete/:ISBN", async function deleteBook(req, res) {
 });
 
 
-bookRouter.get("/books", async function listBooks(req, res) {
+bookRouter.get("/books", async (req, res) => {
   try {
-    const books = await bookModel.find();
+    const page = parseInt(req.query.page) || 1; 
+    const limit = parseInt(req.query.limit) || 2; 
 
-    res.status(200).json(books);
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+
+    const totalBooks = await bookModel.countDocuments();
+    
+    const books = await bookModel.find()
+      .skip(startIndex)
+      .limit(limit);
+
+    const pagination = {};
+
+    if (endIndex < totalBooks) {
+      pagination.next = {
+        page: (page),
+        limit: limit
+      };
+    }
+
+    if (startIndex > 0) {
+      pagination.prev = {
+        page: (page ),
+        limit: limit
+      };
+    }
+
+    res.status(200).json({ books, pagination });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -94,10 +121,11 @@ bookRouter.get("/books", async function listBooks(req, res) {
 
 
 
+
 bookRouter.post(
   "/borrow/:bookId",
   authenticate,
-  async function borrowBook(req, res) {
+  async (req, res)=> {
     const userId = req.body.userID;
     const { bookId } = req.params;
 
@@ -142,7 +170,7 @@ bookRouter.post(
           });
       }
 
-      // Update book quantity and add the book to the user's borrowDetails
+     
       user.quantity -= 1;
       user.borrowDetails.push({
         book: bookId,
@@ -163,7 +191,7 @@ bookRouter.post(
 bookRouter.delete(
   "/return/:bookId",
   authenticate,
-  async function returnBook(req, res) {
+  async (req, res) => {
     const userId = req.body.userID;
     const { bookId } = req.params;
 
@@ -184,15 +212,10 @@ bookRouter.delete(
           .json({ message: "You haven't borrowed this book." });
       }
 
-      // Find the book in the user's borrowDetails and remove it
+     
       user.borrowDetails.splice(borrowedBookIndex, 1);
 
-      // Find the book in the bookModel and increment its quantity
-      // const book = await bookModel.findById(bookId);
-      // if (book) {
-      //   book.quantity += 1;
-      //   await book.save();
-      // }
+      
 
       await user.save();
 
