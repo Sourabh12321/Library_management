@@ -2,6 +2,8 @@
 
 Library Management System designed to empower users in efficiently overseeing library resources. This comprehensive system will encompass essential functionalities, including user registration and authentication, streamlined book administration (addition, modification, removal, and listing), simplified book borrowing procedures, intuitive book searching capabilities, and an intelligent recommendation system to enhance the overall library experience.
 
+## Depoyed Link :- https://library-management-3lsr.onrender.com/
+
 ## Demonstrating video :- https://vimeo.com/871837704?share=copy
  
 ## User Authentication API
